@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Owner {
+  id       String    @id @default(cuid())
+  email    String    @unique
+  username String?
+  password String?
+  provider Provider?
+  units    Unit[]
+  tenants  Tenant[]
+}
+
+model Tenant {
+  id          String  @id @default(cuid())
+  name        String
+  ownerId     String
+  phoneNumber String
+  unitId      String
+  leaseStart  String?
+  leaseEnd    String?
+  owner       Owner   @relation(fields: [ownerId], references: [id])
+  unit        Unit    @relation(fields: [unitId], references: [id])
+}
+
+model Unit {
+  id       String   @id @default(cuid())
+  unitName String
+  ownerId  String
+  tenants  Tenant[]
+  owner    Owner    @relation(fields: [ownerId], references: [id])
+  bills    Bill[]
+}
+
+model Bill {
+  id       String    @id @default(cuid())
+  unitId   String
+  amount   String
+  billType String
+  dueDate  String
+  status   STATUS
+  dateSent DateTime  @default(now())
+  datePaid DateTime?
+  proofURL String?
+  unit     Unit      @relation(fields: [unitId], references: [id])
+}
+
+enum STATUS {
+  PENDING
+  PAID
+  CONFIRMED
+}
+
+enum billType {
+  WATER
+  GAS
+  ELECTRICITY
+  MAINTENANCE
+  INTERNET
+  OTHER
+}
+
+enum Provider {
+  GOOGLE
+  CREDENTIALS
+}
