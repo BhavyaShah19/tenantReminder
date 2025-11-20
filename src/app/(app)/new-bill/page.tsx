@@ -78,7 +78,7 @@ const NewBill = () => {
     if (res.data) {
       const confirmLink = `${window.location.origin}/confirm/${res.data.createdBill.id} `;
       selectedUnit.tenants.forEach((tenant) => {
-        const message = `Hello ${tenant.name},You have a new ${data.billType} bill for Unit ${selectedUnit.unitName}:Amount: Rs${data.amount}Due Date: ${new Date(data.dueDate).toLocaleDateString()}Click here to confirm payment: ${confirmLink}`;
+        const message = `Hello ${tenant.name},You have a new ${data.billType} bill for Unit ${selectedUnit.unitName}. Amount: Rs ${data.amount}. Due Date: ${new Date(data.dueDate).toLocaleDateString()}. Click here to confirm payment: ${confirmLink}`;
 
         const whatsappLink = `https://wa.me/${tenant.phoneNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
         window.open(whatsappLink, '_blank');
