@@ -1,3 +1,4 @@
+import { Select } from '@/components/ui/select';
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/options";
@@ -26,6 +27,9 @@ export async function POST(request: Request) {
                         }
                     })
                 }
+            },
+            include: {
+                tenants: true
             }
         })
         if(!res){
@@ -95,7 +99,3 @@ export async function GET(request: Request) {
         )
     }
 }
-//delete unit
-
-
-// add tenant to unit

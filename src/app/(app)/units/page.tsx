@@ -32,6 +32,7 @@ type Unit = {
 }
 
 const Units = () => {
+    var durationMonths = 0
     const router = useRouter();
     const { toast } = useToast();
     const [units, setUnits] = useState<Unit[]>([])
@@ -75,6 +76,8 @@ const Units = () => {
         },
     });
 
+    const { watch } = form;
+
     const { fields, append, remove } = useFieldArray({
         control: form.control,
         name: 'tenants',
@@ -114,7 +117,7 @@ const Units = () => {
 
             if (selectedUnitForTenant) {
                 const res = await axios.patch(`/api/units/${selectedUnitForTenant}/tenants`, data)
-                const addedTenant=res.data.data.tenants[res.data.data.tenants.length-1]
+                const addedTenant = res.data.data.tenants[res.data.data.tenants.length - 1]
                 if (res.data.success) {
                     toast({
                         title: 'Tenant Added',
@@ -203,6 +206,25 @@ const Units = () => {
         }
     };
 
+    function calculateLeaseMonths(leaseStartString: string, leaseEndString: string) {
+        if (!leaseStartString || !leaseEndString) {
+            return null;
+        }
+        const startDate = new Date(leaseStartString);
+        const endDate = new Date(leaseEndString)
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+            console.error("Invalid Date input provided:", leaseStartString, leaseEndString);
+            return null;
+        }
+        const yearDiff = endDate.getFullYear() - startDate.getFullYear();
+        const monthDiff = endDate.getMonth() - startDate.getMonth();
+        const totalMonths = (yearDiff * 12) + monthDiff;
+        if (endDate.getDate() < startDate.getDate()) {
+            return totalMonths - 1;
+        }
+        return totalMonths;
+    }
+
     return (
         <div className="min-h-screen bg-background">
             <header className="border-b bg-card">
@@ -263,59 +285,37 @@ const Units = () => {
                                                 </Button>
                                             </div>
 
-                                            {fields.map((field, index) => (
-                                                <Card key={field.id}>
-                                                    <CardHeader>
-                                                        <CardTitle className="text-base flex justify-between items-center">
-                                                            <span>Tenant {index + 1}</span>
-                                                            {fields.length > 1 && (
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    onClick={() => remove(index)}
-                                                                >
-                                                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                                                </Button>
-                                                            )}
-                                                        </CardTitle>
-                                                    </CardHeader>
-                                                    <CardContent className="space-y-4">
-                                                        <FormField
-                                                            control={form.control}
-                                                            name={`tenants.${index}.name`}
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormLabel>Tenant Name</FormLabel>
-                                                                    <FormControl>
-                                                                        <Input {...field} />
-                                                                    </FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                        <FormField
-                                                            control={form.control}
-                                                            name={`tenants.${index}.phoneNumber`}
-                                                            render={({ field }) => (
-                                                                <FormItem>
-                                                                    <FormLabel>Phone Number (with country code)</FormLabel>
-                                                                    <FormControl>
-                                                                        <Input {...field} placeholder="+1234567890" />
-                                                                    </FormControl>
-                                                                    <FormMessage />
-                                                                </FormItem>
-                                                            )}
-                                                        />
-                                                        <div className="grid grid-cols-2 gap-4">
+                                            {fields.map((field, index) => {
+                                                const currentTenant = form.watch(`tenants.${index}`);
+                                                const leaseStartOfTenant = currentTenant?.leaseStart;
+                                                const leaseEndOfTenant = currentTenant?.leaseEnd;
+                                                const durationMonths = calculateLeaseMonths(leaseStartOfTenant, leaseEndOfTenant);
+                                                return (
+                                                    <Card key={field.id}>
+                                                        <CardHeader>
+                                                            <CardTitle className="text-base flex justify-between items-center">
+                                                                <span>Tenant {index + 1}</span>
+                                                                {fields.length > 1 && (
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        onClick={() => remove(index)}
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4 text-destructive" />
+                                                                    </Button>
+                                                                )}
+                                                            </CardTitle>
+                                                        </CardHeader>
+                                                        <CardContent className="space-y-4">
                                                             <FormField
                                                                 control={form.control}
-                                                                name={`tenants.${index}.leaseStart`}
+                                                                name={`tenants.${index}.name`}
                                                                 render={({ field }) => (
                                                                     <FormItem>
-                                                                        <FormLabel>Lease Start</FormLabel>
+                                                                        <FormLabel>Tenant Name</FormLabel>
                                                                         <FormControl>
-                                                                            <Input type="date" {...field} />
+                                                                            <Input {...field} />
                                                                         </FormControl>
                                                                         <FormMessage />
                                                                     </FormItem>
@@ -323,21 +323,53 @@ const Units = () => {
                                                             />
                                                             <FormField
                                                                 control={form.control}
-                                                                name={`tenants.${index}.leaseEnd`}
+                                                                name={`tenants.${index}.phoneNumber`}
                                                                 render={({ field }) => (
                                                                     <FormItem>
-                                                                        <FormLabel>Lease End</FormLabel>
+                                                                        <FormLabel>Phone Number (with country code)</FormLabel>
                                                                         <FormControl>
-                                                                            <Input type="date" {...field} />
+                                                                            <Input {...field} placeholder="+1234567890" />
                                                                         </FormControl>
                                                                         <FormMessage />
                                                                     </FormItem>
                                                                 )}
                                                             />
-                                                        </div>
-                                                    </CardContent>
-                                                </Card>
-                                            ))}
+                                                            <div className="grid grid-cols-2 gap-4">
+                                                                <FormField
+                                                                    control={form.control}
+                                                                    name={`tenants.${index}.leaseStart`}
+                                                                    render={({ field }) => (
+                                                                        <FormItem>
+                                                                            <FormLabel>Lease Start</FormLabel>
+                                                                            <FormControl>
+                                                                                <Input type="date" {...field} />
+                                                                            </FormControl>
+                                                                            <FormMessage />
+                                                                        </FormItem>
+                                                                    )}
+                                                                />
+                                                                <FormField
+                                                                    control={form.control}
+                                                                    name={`tenants.${index}.leaseEnd`}
+                                                                    render={({ field }) => (
+                                                                        <FormItem>
+                                                                            <FormLabel>Lease End</FormLabel>
+                                                                            <FormControl>
+                                                                                <Input type="date" {...field} />
+                                                                            </FormControl>
+                                                                            <FormMessage />
+                                                                        </FormItem>
+                                                                    )}
+                                                                />
+                                                            </div>
+                                                            {durationMonths !== null && durationMonths > 0 && (
+                                                                <p className="text-sm font-semibold mt-2 text-blue-600">
+                                                                    Lease Duration: {durationMonths} Months
+                                                                </p>
+                                                            )}
+                                                        </CardContent>
+                                                    </Card>)
+                                            })}
                                         </div>
 
                                         <Button type='submit' className="w-full">Add Unit</Button>
@@ -348,7 +380,8 @@ const Units = () => {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {units.map((unit) => (
+                        {units.map((unit) => {
+                            return(
                             <Card key={unit.id}>
                                 <CardHeader>
                                     <CardTitle className="flex items-center justify-between">
@@ -365,6 +398,7 @@ const Units = () => {
                                                         <DialogTitle>Add Tenant to Unit {unit.unitName}</DialogTitle>
                                                     </DialogHeader>
                                                     <Form {...tenantForm}>
+                                        
                                                         <form onSubmit={tenantForm.handleSubmit(onSubmitTenant)} className="space-y-4">
                                                             <FormField
                                                                 control={tenantForm.control}
@@ -470,7 +504,7 @@ const Units = () => {
                                     </div>
                                 </CardContent>
                             </Card>
-                        ))}
+                        )})}
                     </div>
 
                     {
