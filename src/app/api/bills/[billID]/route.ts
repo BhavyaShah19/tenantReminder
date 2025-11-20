@@ -3,8 +3,7 @@ import { NextRequest } from "next/server";
 
 
 export async function GET(request: NextRequest,{params}:{params:{billID:string}}) {
-    try {
-        // console.log("billId in backend", params.billID)   
+    try {  
         const {billID}= await params
         const bill = await prisma.bill.findUnique({
             where: {

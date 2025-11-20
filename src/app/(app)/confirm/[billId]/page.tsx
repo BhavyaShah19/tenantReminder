@@ -42,7 +42,6 @@ const Confirm = () => {
 
   async function fetchBillId() {
     setIsFetchingBill(true)
-    console.log("object, billId", billID)
     const res = await axios.get(`/api/bills/${billID}`)
     const unitRelatedToThisBill = res.data.data.unitId
     const tenantsRelatedToThisUnit = await axios.get(`/api/units/${unitRelatedToThisBill}/tenants`)

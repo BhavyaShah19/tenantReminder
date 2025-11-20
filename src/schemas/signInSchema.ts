@@ -14,8 +14,8 @@ export const signUpSchema = z.object({
 export const tenantSchema = z.object({
   name: z.string().min(1, 'Tenant name is required'),
   phoneNumber: z.string().min(1, 'Phone number is required'),
-  leaseStart: z.string().min(1, 'Lease start date is required').optional(),
-  leaseEnd: z.string().min(1, 'Lease end date is required').optional()
+  leaseStart: z.string().min(1, 'Lease start date is required'),
+  leaseEnd: z.string().min(1, 'Lease end date is required')
 });
 
 export const unitSchema = z.object({

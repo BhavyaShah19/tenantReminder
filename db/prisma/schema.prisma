@@ -29,8 +29,8 @@ model Tenant {
   ownerId     String
   phoneNumber String
   unitId      String
-  leaseStart  String?
-  leaseEnd    String?
+  leaseStart  String
+  leaseEnd    String
   owner       Owner   @relation(fields: [ownerId], references: [id])
   unit        Unit    @relation(fields: [unitId], references: [id])
 }

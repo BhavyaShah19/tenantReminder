@@ -9,19 +9,25 @@ export async function PATCH(request: Request,{ params }: { params: { unitID: str
         const {unitID} = await params 
         const session = await getServerSession(authOptions);
         const ownerId = session?.user?.id
-        const newTenantData = {
-            name: name,
-            phoneNumber: phoneNumber,
-            leaseStart: leaseStart,
-            leaseEnd: leaseEnd,
-            ownerId: ownerId??""
-        };
         if(!ownerId){
             return Response.json({
                 success: false,
                 message: "Unauthorized"
             }, { status: 401 })
         }
+        if(!ownerId){
+            return Response.json({
+                success: false,
+                message: "Unauthorized"
+            }, { status: 401 })
+        }
+        const newTenantData = {
+            name: name,
+            phoneNumber: phoneNumber,
+            leaseStart: leaseStart,
+            leaseEnd: leaseEnd,
+            ownerId: ownerId
+        };
         const res=await prisma.unit.update({
             where: {
                 id: unitID,
@@ -31,17 +37,21 @@ export async function PATCH(request: Request,{ params }: { params: { unitID: str
                 tenants: {
                    create: [newTenantData]
                 }
+            },
+            select:{
+                tenants:true
             }
         })
         if(!res){
             return Response.json({
                 success: false,
-                message: "Error adding Tenant"
+                message: "Error adding Tenant",
             }, { status: 500 })
         }
         return Response.json({
             success: true,
-            message: "Tenant added successfully" 
+            message: "Tenant added successfully",
+            data:res 
         }, { status: 200 })
 
     } catch (error) {

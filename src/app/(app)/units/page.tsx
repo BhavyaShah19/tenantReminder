@@ -36,7 +36,6 @@ const Units = () => {
     const { toast } = useToast();
     const [units, setUnits] = useState<Unit[]>([])
     const [isLoading, setisLoading] = useState(false)
-    const [deletingUnit, setDeletingUnit] = useState(false)
     const [openAddUnit, setOpenAddUnit] = useState(false);
     const [selectedUnitForTenant, setSelectedUnitForTenant] = useState<string | null>(null);
 
@@ -82,8 +81,6 @@ const Units = () => {
     });
 
     const onSubmitUnit = async (data: UnitFormData) => {
-        // to do call add unit api
-        console.log("Unit added")
         try {
             const res = await axios.post(`/api/units`, data)
             if (res.data.success) {
@@ -113,40 +110,45 @@ const Units = () => {
     };
 
     const onSubmitTenant = async (data: SingleTenantFormData) => {
-        if (selectedUnitForTenant) {
-            console.log("inside the onSunmitTenant", data)
-            const res = await axios.patch(`/api/units/${selectedUnitForTenant}/tenants`, data)
-            console.log("inside the onSunmitTenant", res.data)
-            if (res.data.success) {
-                toast({
-                    title: 'Tenant Added',
-                    description: 'Tenant added to unit successfully',
-                });
-                tenantForm.reset({
-                    name: '',
-                    phoneNumber: '',
-                    leaseStart: '',
-                    leaseEnd: '',
-                });
-                setUnits(units.map(u => {
-                    if (u.id === selectedUnitForTenant) {
-                        return {
-                            ...u,
-                            tenants: [...u.tenants, res.data.data]
+        try {
+
+            if (selectedUnitForTenant) {
+                const res = await axios.patch(`/api/units/${selectedUnitForTenant}/tenants`, data)
+                const addedTenant=res.data.data.tenants[res.data.data.tenants.length-1]
+                if (res.data.success) {
+                    toast({
+                        title: 'Tenant Added',
+                        description: 'Tenant added to unit successfully',
+                    });
+                    tenantForm.reset({
+                        name: '',
+                        phoneNumber: '',
+                        leaseStart: '',
+                        leaseEnd: '',
+                    });
+                    setUnits(units.map(u => {
+                        if (u.id === selectedUnitForTenant) {
+                            return {
+                                ...u,
+                                tenants: [...u.tenants, addedTenant]
+                            }
                         }
-                    }
-                    else {
                         return u
-                    }
-                }))
-                setSelectedUnitForTenant(null);
+                    }))
+                    setSelectedUnitForTenant(null);
+                }
+                else {
+                    toast({
+                        title: 'Error',
+                        description: 'Error adding tenant to unit Try again after some time',
+                    });
+                }
             }
-            else {
-                toast({
-                    title: 'Error',
-                    description: 'Error adding tenant to unit',
-                });
-            }
+        } catch (error) {
+            toast({
+                title: 'Error',
+                description: 'Error adding tenant to unit.',
+            });
         }
     };
 
@@ -155,7 +157,6 @@ const Units = () => {
             if (confirm('Delete this tenant?')) {
 
                 const res = await axios.delete(`/api/units/${unitId}/tenants/${tenantId}`)
-                console.log("Tenant deleted response", res.data)
                 if (res.data.success) {
                     toast({ title: 'Tenant Deleted', description: `Tenant removed from Unit ${unitName}` });
                     setUnits(units.map(u => {
@@ -433,18 +434,25 @@ const Units = () => {
                                         </div>
                                     </CardTitle>
                                 </CardHeader>
+
                                 <CardContent className="space-y-3">
                                     <div>
                                         <p className="text-sm text-muted-foreground mb-2">Tenants ({unit.tenants.length})</p>
                                         {unit.tenants.map((tenant) => (
-                                            <Card key={tenant?.id} className="mb-2 bg-muted/30">
+                                            <Card key={tenant.id} className="mb-2 bg-muted/30">
                                                 <CardContent className="p-3">
                                                     <div className="flex justify-between items-start">
                                                         <div className="space-y-1 flex-1">
-                                                            <p className="font-medium">{tenant?.name}</p>
-                                                            <p className="text-sm text-muted-foreground">{tenant?.phoneNumber}</p>
+                                                            <p className="font-medium">{tenant.name}</p>
+                                                            <p className="text-sm text-muted-foreground">{tenant.phoneNumber}</p>
                                                             <p className="text-xs text-muted-foreground">
-                                                                {new Date(tenant?.leaseStart).toLocaleDateString()} - {new Date(tenant?.leaseEnd).toLocaleDateString()}
+                                                                {tenant.leaseStart
+                                                                    ? new Date(tenant.leaseStart).toLocaleDateString()
+                                                                    : 'Start Date Missing'}
+                                                                {' - '}
+                                                                {tenant.leaseEnd
+                                                                    ? new Date(tenant.leaseEnd).toLocaleDateString()
+                                                                    : 'End Date Missing'}
                                                             </p>
                                                         </div>
                                                         <Button
@@ -476,8 +484,9 @@ const Units = () => {
                         )
                     }
                 </main>
-            )}
-        </div>
+            )
+            }
+        </div >
     );
 };
 

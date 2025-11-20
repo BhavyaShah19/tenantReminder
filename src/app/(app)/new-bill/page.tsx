@@ -29,12 +29,9 @@ const NewBill = () => {
 
   async function fetchUnits() {
     setLoading(true)
-    console.log("Loading inside new bill")
     try {
       const unitsFetched = await axios.get('/api/units')
       if (unitsFetched.status === 200 && unitsFetched.data.data) {
-        console.log("API Response Data:", unitsFetched.data.data);
-        console.log("API Response Length:", unitsFetched.data.data.length);
         setUnits(unitsFetched.data.data)
         if (unitsFetched.data.data.length === 0) {
           console.warn("The API returned an empty array. Check your database.");
@@ -47,7 +44,6 @@ const NewBill = () => {
       console.error("Axios Failed to fetch units:");
     } finally {
       setLoading(false);
-      console.log("Loading outside new bill");
     }
   }
 

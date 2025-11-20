@@ -28,25 +28,19 @@ export const authOptions: NextAuthOptions = {
                             email:credentials.identifier
                         },
                     });
-                    console.log("inside options", user?.password+''+credentials.identifier)
                     if (!user || !user.password) {
                         throw new Error('No user found');
                     }
-                    console.log("Hi I reached here1")
                     const isPasswordCorrect = await bcrypt.compare(
                         credentials.password,
                         user.password
                     );
-                    console.log("Hi I reached here2")
                     if (isPasswordCorrect) {
-                        console.log("Hi I reached here1.1")
                         return user;
                     } else {
                         throw new Error('Incorrect password');
                     }
-                    console.log("Hi I reached here3")
                 } catch (err: any) {
-                    console.log("Hi I reached here4")
                     console.error('Credentials authorize error:', err); 
                     return null;
                 }
